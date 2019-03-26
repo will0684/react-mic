@@ -58,8 +58,6 @@ export class MicrophoneRecorder {
         navigator.mediaDevices.getUserMedia(constraints)
           .then((str) => {
             stream = str;
-            console.log(stream);
-            console.log(MediaRecorder);
 
             if(safariMediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               mediaRecorder = new safariMediaRecorder(str, mediaOptions);
