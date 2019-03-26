@@ -5,6 +5,7 @@ import AudioContext from './AudioContext';
 var analyser = void 0;
 var audioCtx = void 0;
 var mediaRecorder = void 0;
+var safariMediaRecorder = require('audio-recorder-polyfill');
 var chunks = [];
 var startTime = void 0;
 var stream = void 0;
@@ -57,10 +58,10 @@ export var MicrophoneRecorder = function () {
             console.log(stream);
             console.log(MediaRecorder);
 
-            if (MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
-              mediaRecorder = new MediaRecorder(str, mediaOptions);
+            if (safariMediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
+              mediaRecorder = new safariMediaRecorder(str, mediaOptions);
             } else {
-              mediaRecorder = new MediaRecorder(str);
+              mediaRecorder = new safariMediaRecorder(str);
             }
 
             if (onStartCallback) {

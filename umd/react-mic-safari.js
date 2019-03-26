@@ -11,7 +11,7 @@
 		exports["react-mic"] = factory(require("react"));
 	else
 		root["react-mic"] = factory(root["React"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_14__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_16__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -77,7 +77,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 15);
+/******/ 	return __webpack_require__(__webpack_require__.s = 17);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -301,7 +301,7 @@ module.exports = ReactPropTypesSecret;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_ReactMic__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__components_ReactMic__ = __webpack_require__(8);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "ReactMic", function() { return __WEBPACK_IMPORTED_MODULE_0__components_ReactMic__["a"]; });
 
 
@@ -309,17 +309,384 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 /* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var AudioContext = window.AudioContext || window.webkitAudioContext
+
+function createWorker (fn) {
+  var js = fn
+    .toString()
+    .replace(/^function\s*\(\)\s*{/, '')
+    .replace(/}$/, '')
+  var blob = new Blob([js])
+  return new Worker(URL.createObjectURL(blob))
+}
+
+function error (method) {
+  var event = new Event('error')
+  event.data = new Error('Wrong state for ' + method)
+  return event
+}
+
+var context, processor
+
+/**
+ * Audio Recorder with MediaRecorder API.
+ *
+ * @param {MediaStream} stream The audio stream to record.
+ *
+ * @example
+ * navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+ *   var recorder = new MediaRecorder(stream)
+ * })
+ *
+ * @class
+ */
+function MediaRecorder (stream) {
+  /**
+   * The `MediaStream` passed into the constructor.
+   * @type {MediaStream}
+   */
+  this.stream = stream
+
+  /**
+   * The current state of recording process.
+   * @type {"inactive"|"recording"|"paused"}
+   */
+  this.state = 'inactive'
+
+  this.em = document.createDocumentFragment()
+  this.encoder = createWorker(MediaRecorder.encoder)
+
+  var recorder = this
+  this.encoder.addEventListener('message', function (e) {
+    var event = new Event('dataavailable')
+    event.data = new Blob([e.data], { type: recorder.mimeType })
+    recorder.em.dispatchEvent(event)
+    if (recorder.state === 'inactive') {
+      recorder.em.dispatchEvent(new Event('stop'))
+    }
+  })
+}
+
+MediaRecorder.prototype = {
+  /**
+   * The MIME type that is being used for recording.
+   * @type {string}
+   */
+  mimeType: 'audio/wav',
+
+  /**
+   * Begins recording media.
+   *
+   * @param {number} [timeslice] The milliseconds to record into each `Blob`.
+   *                             If this parameter isn’t included, single `Blob`
+   *                             will be recorded.
+   *
+   * @return {undefined}
+   *
+   * @example
+   * recordButton.addEventListener('click', function () {
+   *   recorder.start()
+   * })
+   */
+  start: function start (timeslice) {
+    /**
+      Create a clone of stream and start recording
+    */
+    if (this.state !== 'inactive') {
+      return this.em.dispatchEvent(error('start'))
+    }
+
+    this.state = 'recording'
+
+    if (!context) {
+      context = new AudioContext()
+    }
+    this.clone = this.stream.clone()
+    var input = context.createMediaStreamSource(this.clone)
+    processor = context.createScriptProcessor(2048, 1, 1)
+
+    var recorder = this
+    processor.onaudioprocess = function (e) {
+      if (recorder.state === 'recording') {
+        recorder.encoder.postMessage([
+          'encode', e.inputBuffer.getChannelData(0)
+        ])
+      }
+    }
+
+    input.connect(processor)
+    processor.connect(context.destination)
+
+    this.em.dispatchEvent(new Event('start'))
+
+    if (timeslice) {
+      this.slicing = setInterval(function () {
+        if (recorder.state === 'recording') recorder.requestData()
+      }, timeslice)
+    }
+
+    return undefined
+  },
+
+  /**
+   * Stop media capture and raise `dataavailable` event with recorded data.
+   *
+   * @return {undefined}
+   *
+   * @example
+   * finishButton.addEventListener('click', function () {
+   *   recorder.stop()
+   * })
+   */
+  stop: function stop () {
+    /**
+      Stop stream and end cloned stream tracks
+    */
+    if (this.state === 'inactive') {
+      return this.em.dispatchEvent(error('stop'))
+    }
+
+    this.requestData()
+    this.state = 'inactive'
+    this.clone.getTracks().forEach(function (track) {
+      track.stop()
+    })
+    return clearInterval(this.slicing)
+  },
+
+  /**
+   * Pauses recording of media streams.
+   *
+   * @return {undefined}
+   *
+   * @example
+   * pauseButton.addEventListener('click', function () {
+   *   recorder.pause()
+   * })
+   */
+  pause: function pause () {
+    if (this.state !== 'recording') {
+      return this.em.dispatchEvent(error('pause'))
+    }
+
+    this.state = 'paused'
+    return this.em.dispatchEvent(new Event('pause'))
+  },
+
+  /**
+   * Resumes media recording when it has been previously paused.
+   *
+   * @return {undefined}
+   *
+   * @example
+   * resumeButton.addEventListener('click', function () {
+   *   recorder.resume()
+   * })
+   */
+  resume: function resume () {
+    if (this.state !== 'paused') {
+      return this.em.dispatchEvent(error('resume'))
+    }
+
+    this.state = 'recording'
+    return this.em.dispatchEvent(new Event('resume'))
+  },
+
+  /**
+   * Raise a `dataavailable` event containing the captured media.
+   *
+   * @return {undefined}
+   *
+   * @example
+   * this.on('nextData', function () {
+   *   recorder.requestData()
+   * })
+   */
+  requestData: function requestData () {
+    if (this.state === 'inactive') {
+      return this.em.dispatchEvent(error('requestData'))
+    }
+
+    return this.encoder.postMessage(['dump', context.sampleRate])
+  },
+
+  /**
+   * Add listener for specified event type.
+   *
+   * @param {"start"|"stop"|"pause"|"resume"|"dataavailable"|"error"}
+   * type Event type.
+   * @param {function} listener The listener function.
+   *
+   * @return {undefined}
+   *
+   * @example
+   * recorder.addEventListener('dataavailable', function (e) {
+   *   audio.src = URL.createObjectURL(e.data)
+   * })
+   */
+  addEventListener: function addEventListener () {
+    this.em.addEventListener.apply(this.em, arguments)
+  },
+
+  /**
+   * Remove event listener.
+   *
+   * @param {"start"|"stop"|"pause"|"resume"|"dataavailable"|"error"}
+   * type Event type.
+   * @param {function} listener The same function used in `addEventListener`.
+   *
+   * @return {undefined}
+   */
+  removeEventListener: function removeEventListener () {
+    this.em.removeEventListener.apply(this.em, arguments)
+  },
+
+  /**
+   * Calls each of the listeners registered for a given event.
+   *
+   * @param {Event} event The event object.
+   *
+   * @return {boolean} Is event was no canceled by any listener.
+   */
+  dispatchEvent: function dispatchEvent () {
+    this.em.dispatchEvent.apply(this.em, arguments)
+  }
+}
+
+/**
+ * Returns `true` if the MIME type specified is one the polyfill can record.
+ *
+ * This polyfill supports only `audio/wav`.
+ *
+ * @param {string} mimeType The mimeType to check.
+ *
+ * @return {boolean} `true` on `audio/wav` MIME type.
+ */
+MediaRecorder.isTypeSupported = function isTypeSupported (mimeType) {
+  return /audio\/wave?/.test(mimeType)
+}
+
+/**
+ * `true` if MediaRecorder can not be polyfilled in the current browser.
+ * @type {boolean}
+ *
+ * @example
+ * if (MediaRecorder.notSupported) {
+ *   showWarning('Audio recording is not supported in this browser')
+ * }
+ */
+MediaRecorder.notSupported = !navigator.mediaDevices || !AudioContext
+
+/**
+ * Converts RAW audio buffer to compressed audio files.
+ * It will be loaded to Web Worker.
+ * By default, WAVE encoder will be used.
+ * @type {function}
+ *
+ * @example
+ * MediaRecorder.prototype.mimeType = 'audio/ogg'
+ * MediaRecorder.encoder = oggEncoder
+ */
+MediaRecorder.encoder = __webpack_require__(7)
+
+module.exports = MediaRecorder
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+// Copied from https://github.com/chris-rudmin/Recorderjs
+
+module.exports = function () {
+  var BYTES_PER_SAMPLE = 2
+
+  var recorded = []
+
+  function encode (buffer) {
+    var length = buffer.length
+    var data = new Uint8Array(length * BYTES_PER_SAMPLE)
+    for (var i = 0; i < length; i++) {
+      var index = i * BYTES_PER_SAMPLE
+      var sample = buffer[i]
+      if (sample > 1) {
+        sample = 1
+      } else if (sample < -1) {
+        sample = -1
+      }
+      sample = sample * 32768
+      data[index] = sample
+      data[index + 1] = sample >> 8
+    }
+    recorded.push(data)
+  }
+
+  function dump (sampleRate) {
+    var bufferLength = recorded.length ? recorded[0].length : 0
+    var length = recorded.length * bufferLength
+    var wav = new Uint8Array(44 + length)
+    var view = new DataView(wav.buffer)
+
+    // RIFF identifier 'RIFF'
+    view.setUint32(0, 1380533830, false)
+    // file length minus RIFF identifier length and file description length
+    view.setUint32(4, 36 + length, true)
+    // RIFF type 'WAVE'
+    view.setUint32(8, 1463899717, false)
+    // format chunk identifier 'fmt '
+    view.setUint32(12, 1718449184, false)
+    // format chunk length
+    view.setUint32(16, 16, true)
+    // sample format (raw)
+    view.setUint16(20, 1, true)
+    // channel count
+    view.setUint16(22, 1, true)
+    // sample rate
+    view.setUint32(24, sampleRate, true)
+    // byte rate (sample rate * block align)
+    view.setUint32(28, sampleRate * BYTES_PER_SAMPLE, true)
+    // block align (channel count * bytes per sample)
+    view.setUint16(32, BYTES_PER_SAMPLE, true)
+    // bits per sample
+    view.setUint16(34, 8 * BYTES_PER_SAMPLE, true)
+    // data chunk identifier 'data'
+    view.setUint32(36, 1684108385, false)
+    // data chunk length
+    view.setUint32(40, length, true)
+
+    for (var i = 0; i < recorded.length; i++) {
+      wav.set(recorded[i], i * bufferLength + 44)
+    }
+
+    recorded = []
+    postMessage(wav.buffer, [wav.buffer])
+  }
+
+  onmessage = function (e) {
+    if (e.data[0] === 'encode') {
+      encode(e.data[1])
+    } else {
+      dump(e.data[1])
+    }
+  }
+}
+
+
+/***/ }),
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(14);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react__ = __webpack_require__(16);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0_react___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_0_react__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(13);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types__ = __webpack_require__(15);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1_prop_types___default = __webpack_require__.n(__WEBPACK_IMPORTED_MODULE_1_prop_types__);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__libs_MicrophoneRecorder__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__libs_MicrophoneRecorder__ = __webpack_require__(10);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__libs_AudioContext__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__libs_AudioPlayer__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__libs_Visualizer__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__libs_AudioPlayer__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__libs_Visualizer__ = __webpack_require__(11);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return ReactMic; });
 var _jsxFileName = '/Users/jordanwillis/Google Drive/Mobile Development/MADD/Year 2/forks/react-mic/src/components/ReactMic.js';
 
@@ -491,7 +858,7 @@ ReactMic.defaultProps = {
 };
 
 /***/ }),
-/* 7 */
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -518,7 +885,7 @@ var AudioPlayer = {
 /* harmony default export */ __webpack_exports__["a"] = AudioPlayer;
 
 /***/ }),
-/* 8 */
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -531,6 +898,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var analyser = void 0;
 var audioCtx = void 0;
 var mediaRecorder = void 0;
+var safariMediaRecorder = __webpack_require__(6);
 var chunks = [];
 var startTime = void 0;
 var stream = void 0;
@@ -583,10 +951,10 @@ var MicrophoneRecorder = function () {
             console.log(stream);
             console.log(MediaRecorder);
 
-            if (MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
-              mediaRecorder = new MediaRecorder(str, mediaOptions);
+            if (safariMediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
+              mediaRecorder = new safariMediaRecorder(str, mediaOptions);
             } else {
-              mediaRecorder = new MediaRecorder(str);
+              mediaRecorder = new safariMediaRecorder(str);
             }
 
             if (onStartCallback) {
@@ -659,7 +1027,7 @@ var MicrophoneRecorder = function () {
 }();
 
 /***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -808,7 +1176,7 @@ var Visualizer = {
 /* harmony default export */ __webpack_exports__["a"] = Visualizer;
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -905,7 +1273,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -971,7 +1339,7 @@ module.exports = checkPropTypes;
 
 
 /***/ }),
-/* 12 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -987,10 +1355,10 @@ module.exports = checkPropTypes;
 var emptyFunction = __webpack_require__(1);
 var invariant = __webpack_require__(2);
 var warning = __webpack_require__(3);
-var assign = __webpack_require__(10);
+var assign = __webpack_require__(12);
 
 var ReactPropTypesSecret = __webpack_require__(4);
-var checkPropTypes = __webpack_require__(11);
+var checkPropTypes = __webpack_require__(13);
 
 module.exports = function(isValidElement, throwOnDirectAccess) {
   /* global Symbol */
@@ -1520,7 +1888,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -1545,7 +1913,7 @@ if (true) {
   // By explicitly using `prop-types` you are opting into new development behavior.
   // http://fb.me/prop-types-in-prod
   var throwOnDirectAccess = true;
-  module.exports = __webpack_require__(12)(isValidElement, throwOnDirectAccess);
+  module.exports = __webpack_require__(14)(isValidElement, throwOnDirectAccess);
 } else {
   // By explicitly using `prop-types` you are opting into new production behavior.
   // http://fb.me/prop-types-in-prod
@@ -1554,13 +1922,13 @@ if (true) {
 
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_14__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_16__;
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = __webpack_require__(5);
