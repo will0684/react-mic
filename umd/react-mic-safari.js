@@ -850,7 +850,7 @@ ReactMic.defaultProps = {
   strokeColor: '#000000',
   className: 'visualizer',
   audioBitsPerSecond: 128000,
-  mimeType: 'audio/webm;',
+  mimeType: 'audio/wav;',
   record: false,
   width: 640,
   height: 100,
@@ -948,8 +948,6 @@ var MicrophoneRecorder = function () {
 
           navigator.mediaDevices.getUserMedia(constraints).then(function (str) {
             stream = str;
-            console.log(stream);
-            console.log(MediaRecorder);
 
             if (safariMediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               mediaRecorder = new safariMediaRecorder(str, mediaOptions);
