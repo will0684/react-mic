@@ -948,11 +948,14 @@ var MicrophoneRecorder = function () {
 
           navigator.mediaDevices.getUserMedia(constraints).then(function (str) {
             stream = str;
+            console.log('MediaOptions MimeTypes: ' + mediaOptions.mimeType);
 
             if (safariMediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               mediaRecorder = new safariMediaRecorder(str, mediaOptions);
+              console.log('Mediarecorder with mediaOptions: ' + mediaRecorder);
             } else {
               mediaRecorder = new safariMediaRecorder(str);
+              console.log('Mediarecorder Stream Only: ' + mediaRecorder);
             }
 
             if (onStartCallback) {
