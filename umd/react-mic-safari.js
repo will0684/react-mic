@@ -1,5 +1,5 @@
 /*!
- * react-mic v12.4.1 - https://hackingbeauty.github.io/react-mic
+ * react-mic-safari v12.4.1 - https://hackingbeauty.github.io/react-mic
  * MIT Licensed
  */
 (function webpackUniversalModuleDefinition(root, factory) {
