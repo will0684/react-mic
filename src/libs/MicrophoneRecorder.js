@@ -92,7 +92,7 @@ export class MicrophoneRecorder {
               })
 
               mediaRecorder.addEventListener('stop', (event) => {
-                this.onStop;
+                this.onStop();
               })
 
             }
