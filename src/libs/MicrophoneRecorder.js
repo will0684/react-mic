@@ -58,11 +58,7 @@ export class MicrophoneRecorder {
           .then((str) => {
             stream = str;
 
-            if(MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
-              mediaRecorder = new MediaRecorder(str, mediaOptions);
-            } else {
-              mediaRecorder = new MediaRecorder(str);
-            }
+            mediaRecorder = new MediaRecorder(str, mediaOptions);
 
             if(onStartCallback) { onStartCallback() };
 
