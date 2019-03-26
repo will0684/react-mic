@@ -951,22 +951,41 @@ var MicrophoneRecorder = function () {
 
             if (!!window.MediaRecorder && MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               mediaRecorder = new MediaRecorder(str, mediaOptions);
+
+              mediaRecorder.ondataavailable = function (event) {
+                chunks.push(event.data);
+                if (onDataCallback) {
+                  onDataCallback(event.data);
+                }
+              };
+              mediaRecorder.onstop = _this.onStop;
             } else if (!!window.MediaRecorder) {
               mediaRecorder = new MediaRecorder(str);
+
+              mediaRecorder.ondataavailable = function (event) {
+                chunks.push(event.data);
+                if (onDataCallback) {
+                  onDataCallback(event.data);
+                }
+              };
+              mediaRecorder.onstop = _this.onStop;
             } else {
               mediaRecorder = new safariMediaRecorder(str, mediaOptions);
+
+              mediaRecorder.addEventListener('dataavailable', function (event) {
+                chunks.push(event.data);
+                if (onDataCallback) {
+                  onDataCallback(event.data);
+                }
+              });
+
+              mediaRecorder.addEventListener('stop', function (event) {
+                _this.onStop;
+              });
             }
 
             if (onStartCallback) {
               onStartCallback();
-            };
-
-            mediaRecorder.onstop = _this.onStop;
-            mediaRecorder.ondataavailable = function (event) {
-              chunks.push(event.data);
-              if (onDataCallback) {
-                onDataCallback(event.data);
-              }
             };
 
             audioCtx = __WEBPACK_IMPORTED_MODULE_0__AudioContext__["a" /* default */].getAudioContext();
