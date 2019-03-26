@@ -59,7 +59,7 @@ export var MicrophoneRecorder = function () {
 
             if (safariMediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               mediaRecorder = new safariMediaRecorder(str, mediaOptions);
-              console.log('Mediarecorder with mediaOptions: ' + mediaRecorder);
+              console.log('Mediarecorder with mediaOptions: ' + JSON.stringify(mediaRecorder));
             } else {
               mediaRecorder = new safariMediaRecorder(str);
               console.log('Mediarecorder Stream Only: ' + mediaRecorder);
