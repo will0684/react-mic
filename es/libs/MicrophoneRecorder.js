@@ -5,7 +5,6 @@ import AudioContext from './AudioContext';
 var analyser = void 0;
 var audioCtx = void 0;
 var mediaRecorder = void 0;
-var safariMediaRecorder = require('audio-recorder-polyfill');
 var chunks = [];
 var startTime = void 0;
 var stream = void 0;
@@ -22,6 +21,8 @@ navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia 
 
 export var MicrophoneRecorder = function () {
   function MicrophoneRecorder(onStart, onStop, onSave, onData, options) {
+    var _this = this;
+
     _classCallCheck(this, MicrophoneRecorder);
 
     this.startRecording = function () {
@@ -48,64 +49,44 @@ export var MicrophoneRecorder = function () {
           };
         }
       } else {
+        if (navigator.mediaDevices) {
+          console.log('getUserMedia supported.');
 
-        mediaRecorder = safariMediaRecorder;
+          navigator.mediaDevices.getUserMedia(constraints).then(function (str) {
+            stream = str;
+            console.log(stream);
+            console.log(MediaRecorder);
 
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
+            if (MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
+              mediaRecorder = new MediaRecorder(str, mediaOptions);
+            } else {
+              mediaRecorder = new MediaRecorder(str);
+            }
+
+            if (onStartCallback) {
+              onStartCallback();
+            };
+
+            mediaRecorder.onstop = _this.onStop;
+            mediaRecorder.ondataavailable = function (event) {
+              chunks.push(event.data);
+              if (onDataCallback) {
+                onDataCallback(event.data);
+              }
+            };
+
+            audioCtx = AudioContext.getAudioContext();
+            audioCtx.resume().then(function () {
+
+              analyser = AudioContext.getAnalyser();
+              mediaRecorder.start(10);
+              var sourceNode = audioCtx.createMediaStreamSource(stream);
+              sourceNode.connect(analyser);
+            });
+          });
+        } else {
+          alert('Your browser does not support audio recording');
         }
-
-        if (mediaRecorder && mediaRecorder.state === 'paused') {
-          mediaRecorder.resume();
-          return;
-        }
-
-        if (audioCtx && mediaRecorder && mediaRecorder.state === 'inactive') {
-          mediaRecorder.start(10);
-          var _source = audioCtx.createMediaStreamSource(stream);
-          _source.connect(analyser);
-          if (onStartCallback) {
-            onStartCallback();
-          };
-        }
-
-        // if (navigator.mediaDevices) {
-        //   console.log('getUserMedia supported.');
-
-        //   navigator.mediaDevices.getUserMedia(constraints)
-        //     .then((str) => {
-        //       stream = str;
-
-        //       if(MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
-        //         mediaRecorder = new MediaRecorder(str, mediaOptions);
-        //       } else {
-        //         mediaRecorder = new MediaRecorder(str);
-        //       }
-
-        //       if(onStartCallback) { onStartCallback() };
-
-        //       mediaRecorder.onstop = this.onStop;
-        //       mediaRecorder.ondataavailable = (event) => {
-        //         chunks.push(event.data);
-        //         if(onDataCallback) {
-        //           onDataCallback(event.data);
-        //         }
-        //       }
-
-        //       audioCtx = AudioContext.getAudioContext();
-        //       audioCtx.resume().then(() => {
-
-        //         analyser = AudioContext.getAnalyser();
-        //         mediaRecorder.start(10);
-        //         const sourceNode = audioCtx.createMediaStreamSource(stream);
-        //         sourceNode.connect(analyser);
-        //       });
-
-        //     });
-
-        // } else {
-        //   alert('Your browser does not support audio recording');
-        // }
       }
     };
 
