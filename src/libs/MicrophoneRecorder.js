@@ -64,7 +64,7 @@ export class MicrophoneRecorder {
             } else if (!!MediaRecorder) {
               mediaRecorder = new MediaRecorder(str);
             } else {
-              mediaRecorder = new safariMediaRecorder(str);
+              mediaRecorder = new safariMediaRecorder(str, mediaOptions);
             }
 
             if(onStartCallback) { onStartCallback() };
