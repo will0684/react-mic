@@ -61,21 +61,43 @@ export class MicrophoneRecorder {
 
             if(!!window.MediaRecorder && MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               mediaRecorder = new MediaRecorder(str, mediaOptions);
+
+              mediaRecorder.ondataavailable = (event) => {
+                chunks.push(event.data);
+                if(onDataCallback) {
+                  onDataCallback(event.data);
+                }
+              }
+              mediaRecorder.onstop = this.onStop;
+
             } else if (!!window.MediaRecorder) {
               mediaRecorder = new MediaRecorder(str);
+
+              mediaRecorder.ondataavailable = (event) => {
+                chunks.push(event.data);
+                if(onDataCallback) {
+                  onDataCallback(event.data);
+                }
+              }
+              mediaRecorder.onstop = this.onStop;
+
             } else {
               mediaRecorder = new safariMediaRecorder(str, mediaOptions);
+
+              mediaRecorder.addEventListener('dataavailable', (event) => {
+                chunks.push(event.data);
+                if(onDataCallback) {
+                  onDataCallback(event.data);
+                }
+              })
+
+              mediaRecorder.addEventListener('stop', (event) => {
+                this.onStop;
+              })
+
             }
 
             if(onStartCallback) { onStartCallback() };
-
-            mediaRecorder.onstop = this.onStop;
-            mediaRecorder.ondataavailable = (event) => {
-              chunks.push(event.data);
-              if(onDataCallback) {
-                onDataCallback(event.data);
-              }
-            }
 
             audioCtx = AudioContext.getAudioContext();
             audioCtx.resume().then(() => {
