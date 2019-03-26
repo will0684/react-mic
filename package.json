@@ -1,5 +1,5 @@
 {
-  "name": "react-mic",
+  "name": "react-mic-safari",
   "version": "12.4.1",
   "description": "Record audio from your microphone and display as a sound oscillation",
   "main": "lib/index.js",
