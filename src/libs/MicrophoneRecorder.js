@@ -3,6 +3,7 @@ import AudioContext from './AudioContext';
 let analyser;
 let audioCtx;
 let mediaRecorder;
+let safariMediaRecorder = require('audio-recorder-polyfill');
 let chunks = [];
 let startTime;
 let stream;
@@ -52,7 +53,7 @@ export class MicrophoneRecorder {
       }
     } else {
 
-      mediaRecorder = require('audio-recorder-polyfill');
+      mediaRecorder = safariMediaRecorder;
 
       if(audioCtx && audioCtx.state === 'suspended') {
         audioCtx.resume();
