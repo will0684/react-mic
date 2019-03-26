@@ -3,6 +3,7 @@ import AudioContext from './AudioContext';
 let analyser;
 let audioCtx;
 let mediaRecorder;
+let safariMediaRecorder = require('audio-recorder-polyfill');
 let chunks = [];
 let startTime;
 let stream;
@@ -58,10 +59,12 @@ export class MicrophoneRecorder {
           .then((str) => {
             stream = str;
 
-            if(MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
+            if(MediaRecorder && MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               mediaRecorder = new MediaRecorder(str, mediaOptions);
-            } else {
+            } else if (MediaRecorder) {
               mediaRecorder = new MediaRecorder(str);
+            } else {
+              mediaRecorder = new safariMediaRecorder(str);
             }
 
             if(onStartCallback) { onStartCallback() };
