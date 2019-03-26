@@ -87,7 +87,7 @@ export var MicrophoneRecorder = function () {
               });
 
               mediaRecorder.addEventListener('stop', function (event) {
-                _this.onStop;
+                _this.onStop();
               });
             }
 
