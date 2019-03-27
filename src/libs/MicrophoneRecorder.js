@@ -74,15 +74,17 @@ export class MicrophoneRecorder {
 
             } else if (!!window.MediaRecorder) {
               console.log('Creating Standard MediaRecorder, No Passed MediaOptions')
-              mediaRecorder = new safariMediaRecorder(str);
+              mediaRecorder = new window.MediaRecorder(str);
               console.log(mediaRecorder);
-              mediaRecorder.ondataavailable = (event) => {
+              mediaRecorder.addEventListener('dataavailable', (event) => {
                 chunks.push(event.data);
                 if(onDataCallback) {
                   onDataCallback(event.data);
                 }
-              }
-              mediaRecorder.onstop = this.onStop;
+              })
+              mediaRecorder.addEventListener('stop', (event) => {
+                this.onStop(event);
+              })
 
             } else {
               console.log('Creating Polyfill MediaRecorder for Safari, No Passed MediaOptions')
