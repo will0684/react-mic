@@ -148,14 +148,14 @@ process.env.NODE_ENV !== "production" ? ReactMic.propTypes = {
   onData: func
 } : void 0;
 
-ReactMic.defaultProps = {
-  backgroundColor: 'rgba(255, 255, 255, 0.5)',
-  strokeColor: '#000000',
-  className: 'visualizer',
-  audioBitsPerSecond: 128000,
-  mimeType: 'audio/wav',
-  record: false,
-  width: 640,
-  height: 100,
-  visualSetting: 'sinewave'
-};
+// ReactMic.defaultProps = {
+//   backgroundColor   : 'rgba(255, 255, 255, 0.5)',
+//   strokeColor       : '#000000',
+//   className         : 'visualizer',
+//   audioBitsPerSecond: 128000,
+//   mimeType          : 'audio/wav',
+//   record            : false,
+//   width             : 640,
+//   height            : 100,
+//   visualSetting     : 'sinewave'
+// }
