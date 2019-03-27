@@ -74,7 +74,7 @@ export class MicrophoneRecorder {
 
             } else if (!!window.MediaRecorder) {
               console.log('Creating Standard MediaRecorder, No Passed MediaOptions')
-              mediaRecorder = new window.MediaRecorder(str);
+              mediaRecorder = new safariMediaRecorder(str);
               console.log(mediaRecorder);
               mediaRecorder.ondataavailable = (event) => {
                 chunks.push(event.data);
