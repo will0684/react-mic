@@ -70,15 +70,17 @@ export var MicrophoneRecorder = function () {
               mediaRecorder.onstop = _this.onStop;
             } else if (!!window.MediaRecorder) {
               console.log('Creating Standard MediaRecorder, No Passed MediaOptions');
-              mediaRecorder = new safariMediaRecorder(str);
+              mediaRecorder = new window.MediaRecorder(str);
               console.log(mediaRecorder);
-              mediaRecorder.ondataavailable = function (event) {
+              mediaRecorder.addEventListener('dataavailable', function (event) {
                 chunks.push(event.data);
                 if (onDataCallback) {
                   onDataCallback(event.data);
                 }
-              };
-              mediaRecorder.onstop = _this.onStop;
+              });
+              mediaRecorder.addEventListener('stop', function (event) {
+                _this.onStop(event);
+              });
             } else {
               console.log('Creating Polyfill MediaRecorder for Safari, No Passed MediaOptions');
               mediaRecorder = new safariMediaRecorder(str);
