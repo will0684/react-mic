@@ -58,9 +58,9 @@ export var MicrophoneRecorder = function () {
 
             console.log('Passed mediaOptions.mimeType: ' + mediaOptions.mimeType);
 
-            if (!!window.MediaRecorder && MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
+            if (!!window.MediaRecorder && window.MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               console.log('Creating Standard MediaRecorder with Passed MediaOptions from Component Props');
-              mediaRecorder = new MediaRecorder(str, mediaOptions);
+              mediaRecorder = new window.MediaRecorder(str, mediaOptions);
               mediaRecorder.ondataavailable = function (event) {
                 chunks.push(event.data);
                 if (onDataCallback) {
@@ -70,7 +70,7 @@ export var MicrophoneRecorder = function () {
               mediaRecorder.onstop = _this.onStop;
             } else if (!!window.MediaRecorder) {
               console.log('Creating Standard MediaRecorder, No Passed MediaOptions');
-              mediaRecorder = new MediaRecorder(str);
+              mediaRecorder = new window.MediaRecorder(str);
               mediaRecorder.ondataavailable = function (event) {
                 chunks.push(event.data);
                 if (onDataCallback) {
