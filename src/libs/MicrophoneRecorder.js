@@ -82,7 +82,7 @@ export class MicrophoneRecorder {
               mediaRecorder.onstop = this.onStop;
 
             } else {
-              mediaRecorder = new safariMediaRecorder(str, mediaOptions);
+              mediaRecorder = new safariMediaRecorder(str);
 
               mediaRecorder.addEventListener('dataavailable', (event) => {
                 chunks.push(event.data);
