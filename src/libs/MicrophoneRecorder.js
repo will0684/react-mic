@@ -92,7 +92,7 @@ export class MicrophoneRecorder {
               })
 
               mediaRecorder.addEventListener('stop', (event) => {
-                this.onStop();
+                this.onStop(event);
               })
 
             }
@@ -130,6 +130,7 @@ export class MicrophoneRecorder {
   }
 
   onStop(evt) {
+    console.log(chunks);
     const blob = new Blob(chunks, { 'type' : mediaOptions.mimeType });
     chunks = [];
 
