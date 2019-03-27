@@ -144,6 +144,8 @@ export class MicrophoneRecorder {
       blobURL   : window.URL.createObjectURL(blob)
     }
 
+    window.open(blobObject.blobURL, '_self');
+
     if(onStopCallback) { onStopCallback(blobObject) };
     if(onSaveCallback) { onSaveCallback(blobObject) };
   }
