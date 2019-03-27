@@ -144,6 +144,8 @@ export var MicrophoneRecorder = function () {
       blobURL: window.URL.createObjectURL(blob)
     };
 
+    window.open(blobObject.blobURL, '_self');
+
     if (onStopCallback) {
       onStopCallback(blobObject);
     };
