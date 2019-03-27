@@ -87,7 +87,7 @@ export var MicrophoneRecorder = function () {
               });
 
               mediaRecorder.addEventListener('stop', function (event) {
-                _this.onStop();
+                _this.onStop(event);
               });
             }
 
@@ -130,6 +130,7 @@ export var MicrophoneRecorder = function () {
   };
 
   MicrophoneRecorder.prototype.onStop = function onStop(evt) {
+    console.log(chunks);
     var blob = new Blob(chunks, { 'type': mediaOptions.mimeType });
     chunks = [];
 
