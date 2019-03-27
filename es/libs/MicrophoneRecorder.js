@@ -56,6 +56,8 @@ export var MicrophoneRecorder = function () {
           navigator.mediaDevices.getUserMedia(constraints).then(function (str) {
             stream = str;
 
+            console.log('Passed mediaOptions.mimeType: ' + mediaOptions.mimeType);
+
             if (!!window.MediaRecorder && MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
               console.log('Creating Standard MediaRecorder with Passed MediaOptions from Component Props');
               mediaRecorder = new MediaRecorder(str, mediaOptions);
