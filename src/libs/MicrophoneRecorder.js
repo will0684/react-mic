@@ -60,8 +60,8 @@ export class MicrophoneRecorder {
             stream = str;
 
             if(!!window.MediaRecorder && MediaRecorder.isTypeSupported(mediaOptions.mimeType)) {
+              console.log('Creating Standard MediaRecorder with Passed MediaOptions from Component Props')
               mediaRecorder = new MediaRecorder(str, mediaOptions);
-
               mediaRecorder.ondataavailable = (event) => {
                 chunks.push(event.data);
                 if(onDataCallback) {
@@ -71,8 +71,8 @@ export class MicrophoneRecorder {
               mediaRecorder.onstop = this.onStop;
 
             } else if (!!window.MediaRecorder) {
+              console.log('Creating Standard MediaRecorder, No Passed MediaOptions')
               mediaRecorder = new MediaRecorder(str);
-
               mediaRecorder.ondataavailable = (event) => {
                 chunks.push(event.data);
                 if(onDataCallback) {
@@ -82,8 +82,8 @@ export class MicrophoneRecorder {
               mediaRecorder.onstop = this.onStop;
 
             } else {
+              console.log('Creating Polyfill MediaRecorder for Safari, No Passed MediaOptions')
               mediaRecorder = new safariMediaRecorder(str);
-
               mediaRecorder.addEventListener('dataavailable', (event) => {
                 chunks.push(event.data);
                 if(onDataCallback) {
