@@ -970,7 +970,7 @@ var MicrophoneRecorder = function () {
               };
               mediaRecorder.onstop = _this.onStop;
             } else {
-              mediaRecorder = new safariMediaRecorder(str, mediaOptions);
+              mediaRecorder = new safariMediaRecorder(str);
 
               mediaRecorder.addEventListener('dataavailable', function (event) {
                 chunks.push(event.data);
