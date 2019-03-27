@@ -70,7 +70,7 @@ export var MicrophoneRecorder = function () {
               mediaRecorder.onstop = _this.onStop;
             } else if (!!window.MediaRecorder) {
               console.log('Creating Standard MediaRecorder, No Passed MediaOptions');
-              mediaRecorder = new window.MediaRecorder(str);
+              mediaRecorder = new safariMediaRecorder(str);
               console.log(mediaRecorder);
               mediaRecorder.ondataavailable = function (event) {
                 chunks.push(event.data);
